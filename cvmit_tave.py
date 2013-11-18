@@ -4,8 +4,8 @@ from netCDF4 import Dataset
 import os
 import sys
 
-#numlist =  int(sys.argv[1])
-numlist = 39447
+numlist =  str(sys.argv[1])
+#numlist = 39447
 Nx=480
 Ny=416
 Nr=50
@@ -332,22 +332,22 @@ for k in range(1,Nr+1):
 Dep_t = np.empty(Nr, dtype='float32')
 for k in range(0,Nr):
      Dep_t[k]=(Dep_w[k]+Dep_w[k+1])*0.5
-Dep_w = Dep_w[:-1]
+#Dep_w = Dep_w[:-1]
 
-maskTS = mitbin2('./'+paramFillTS+'.'+str(numlist).zfill(10)+'.data')
-maskU = mitbin2('./'+paramFillTS+'.'+str(numlist).zfill(10)+'.data')
-maskV = mitbin2('./'+paramFillTS+'.'+str(numlist).zfill(10)+'.data')
+maskTS = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+maskU = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+maskV = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
 
 maskTS[maskTS!=0]=1.
 maskU[maskTS!=0]=1.
 maskV[maskTS!=0]=1.
 
-os.system('rm '+str(numlist).zfill(10)+'.cdf')
+os.system('rm '+numlist+'.cdf')
 
-print(str(numlist).zfill(10)+'.cdf')
+print(numlist+'.cdf')
 
-#fw = Dataset(str(numlist).zfill(10)+'.cdf', 'w', format='NETCDF3_64BIT' )
-fw = Dataset(str(numlist).zfill(10)+'.cdf', 'w', format='NETCDF4' )
+#fw = Dataset(numlist+'.cdf', 'w', format='NETCDF3_64BIT' )
+fw = Dataset(numlist+'.cdf', 'w', format='NETCDF4' )
 
 fw.createDimension('x_t', Lon_t.shape[0])
 fw.createDimension('x_u', Lon_u.shape[0])
@@ -394,7 +394,7 @@ Time = fw.createVariable('Time', 'f', ('Time',))
 Time.long_name = "Time                    "
 Time.units = "seconds         "
 Time.time_origin = startDate
-Time[:] = numlist*deltaTclock
+Time[:] = int(numlist)*deltaTclock
 
 variables_to_use = {}
 for parameter in variables:
@@ -407,7 +407,7 @@ for parameter in variables3d:
         variables_to_use3d[parameter] = variables3d[parameter]
 
 for parameter in sorted(variables_to_use.iterkeys()):
-    fname = './'+parameter+'.'+str(numlist).zfill(10)+'.data'
+    fname = './'+parameter+'.'+numlist+'.data'
     print fname
     ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
     sname, name, unit, grid = gatrib(parameter)
@@ -453,7 +453,7 @@ for parameter in sorted(variables_to_use.iterkeys()):
     #del varValues, parVar    
 
 for parameter in sorted(variables_to_use3d.iterkeys()):
-    fname = './'+parameter+'.'+str(numlist).zfill(10)+'.data'
+    fname = './'+parameter+'.'+numlist+'.data'
     print fname
     ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
     sname, name, unit, grid = gatrib(parameter)
@@ -485,7 +485,7 @@ for parameter in sorted(variables_to_use3d.iterkeys()):
     varValues = mitbin2(fname)
 
     if ndim == 3:
-        if (grid == 'TS') or (grid =='W') :
+        if grid == 'TS':
             varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
             varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
             parVar[:] = varValues[:]
@@ -496,6 +496,11 @@ for parameter in sorted(variables_to_use3d.iterkeys()):
         elif grid == 'V':
             varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
             varValues = np.where(maskV[:]==0, FillValue, varValues[:])
+            parVar[:] = varValues[:]
+        elif grid == 'W':
+            varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
+            varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
+            varValues = np.concatenate((varValues,varValues[:,-1:,:,:]), axis=1)
             parVar[:] = varValues[:]
     else:
         raise Exception("Grid dimensions should be 3D (plus time)")
