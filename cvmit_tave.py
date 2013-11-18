@@ -38,6 +38,15 @@ paramFillU  = 'uVeltave'
 paramFillV  = 'uVeltave'
 #value that will be used for masking
 valueFill = 0.
+#do weneed compression?
+czip = True
+# level of compression (from 1 (fastest) to 9 (slowest))
+compr = 4
+#netCDF version
+#Options:
+#NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+netcdfVersion = 'NETCDF4'
+
 
 #Spliting
 variables = {'AREAtave':True,
@@ -347,7 +356,7 @@ os.system('rm '+numlist+'.cdf')
 print(numlist+'.cdf')
 
 #fw = Dataset(numlist+'.cdf', 'w', format='NETCDF3_64BIT' )
-fw = Dataset(numlist+'.cdf', 'w', format='NETCDF4' )
+fw = Dataset(numlist+'.cdf', 'w', format=netcdfVersion )
 
 fw.createDimension('x_t', Lon_t.shape[0])
 fw.createDimension('x_u', Lon_u.shape[0])
@@ -425,7 +434,7 @@ for parameter in sorted(variables_to_use.iterkeys()):
         else:
             raise Exception("The grid is not specified.\n For 2d variables can be 'TS','U' or 'V' ")
     
-    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue)
+    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue, zlib=czip, complevel=compr)
     parVar.long_name = name
     parVar.units = unit
     parVar.missing_value = FillValue
@@ -475,7 +484,7 @@ for parameter in sorted(variables_to_use3d.iterkeys()):
             raise Exception("The grid is not specified.\n For 3d variables can be 'TS','U','V' or 'W' ")
             
             
-    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue)
+    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue,  zlib=czip, complevel=compr)
     parVar.long_name = name
     parVar.units = unit
     parVar.missing_value = FillValue
