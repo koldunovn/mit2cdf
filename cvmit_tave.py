@@ -1,18 +1,50 @@
-from scipy.io import netcdf
+#!/usr/bin/env python
+
+# Converts binary MITgcm snapshots to netCDF.
+#
+# usage:
+# cvmit_tave.py 0000010957
+# or:
+# python cvmit_tave.py 0000010957
+#
+# Dependencies:
+#
+# python-netCDF4
+# numpy
+#
+# The output is close to the one produced by Arne Biastoch's
+# FORTRAN program, but there are couple differences:
+#
+# - Sea ice related variables have zeros not NaNs in the wet points
+#   where they are zero.
+#
+# - Calculation of the landmask based on Salinity (TS grid), U(U grid) and V (V grid) fields.
+#   I assume that there are land points where values are zero.
+#
+# In order to save new variable you have to:
+#    - add it's name to the "Variables to save" dictionary (2D or 3D)
+#    - add another elif statement to the "Properties of the variables:" section
+#
+# Nikolay Koldunov koldunovn@gmail.com
+# latest version: https://github.com/koldunovn/mit2cdf
+#
+
+
 import numpy as np
 from netCDF4 import Dataset
 import os
 import sys
+import time
 
 numlist =  str(sys.argv[1])
-#numlist = 39447
 Nx=480
 Ny=416
 Nr=50
 expnam='POL06'
 startDate='01-JAN-2000 00:00:00'
+timeUnits = "seconds         "
 deltaTclock=1200.
-iBinaryPrec=32.
+#iBinaryPrec=32.
 
 # Gridding parameters
 delZ= np.array([1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01,
@@ -27,28 +59,40 @@ delZ= np.array([1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000
        3.645000e+02, 3.875000e+02, 4.105000e+02, 4.335000e+02, 4.565000e+02])
 phiMin=0.
 thetaMin=0.
-#delX = 480*1,
+# np.array of delX values 
 delX = np.ones(Nx); 
-#delY = 416*1,
+# np.array of delY values
 delY = np.ones(Ny)
+
 FillValue=-1.0e+23
-#parameter that will be used for masking. Should be 3d, usually salinity
+
+# Do we need byteswap? Usually you need it if files
+# were created on the big-endian machine, and conversion is
+# happening on the little-endian machine (or vice versa).
+byteswap = 1
+
+# Parameter that will be used for masking. Should be 3d, usually salinity, U and V
 paramFillTS = 'Stave'
 paramFillU  = 'uVeltave'
 paramFillV  = 'uVeltave'
-#value that will be used for masking
+
+# Value that will be used for masking
 valueFill = 0.
-#do weneed compression?
+
+#do we need compression?
 czip = True
+
 # level of compression (from 1 (fastest) to 9 (slowest))
 compr = 4
+
 #netCDF version
 #Options:
 #NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
 netcdfVersion = 'NETCDF4'
 
 
-#Spliting
+#Variables to save:
+# 2D
 variables = {'AREAtave':True,
              'HEFFtave':True,
              'ETAtave':True,
@@ -68,6 +112,7 @@ variables = {'AREAtave':True,
              'tFluxtave':True,
              'uFluxtave':True,
              'vFluxtave':True}
+#3D
 variables3d ={'Ttave':True,
               'Stave':True,
               'uVeltave':True,
@@ -75,6 +120,7 @@ variables3d ={'Ttave':True,
               'wVeltave':True
               }
 
+# Properties of the variables:
 def gatrib(parname):
         '''Return attrubutes for known variables'''
            
@@ -232,7 +278,7 @@ def gatrib(parname):
 
         return sname, name, unit, grid
 
-
+# Define functions that will read MITgcm binary data:
 def rmeta(filename):
         ''' Reads .meta file and return information about .data file.
         Usage: rmeta(filename)
@@ -316,7 +362,8 @@ def mitbin2(filename, bswap=1, meta=None):
         return data
 
 
-#Grid
+# Grid creation
+
 Lat_v = np.empty(Ny, dtype='float32')
 Lat_t = np.empty(Ny, dtype='float32')
 Lat_v[0]=phiMin
@@ -343,6 +390,8 @@ for k in range(0,Nr):
      Dep_t[k]=(Dep_w[k]+Dep_w[k+1])*0.5
 #Dep_w = Dep_w[:-1]
 
+# Create masks for different grids:
+
 maskTS = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
 maskU = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
 maskV = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
@@ -351,13 +400,18 @@ maskTS[maskTS!=0]=1.
 maskU[maskTS!=0]=1.
 maskV[maskTS!=0]=1.
 
+# Remove file if it's already exist
 os.system('rm '+numlist+'.cdf')
 
 print(numlist+'.cdf')
 
-#fw = Dataset(numlist+'.cdf', 'w', format='NETCDF3_64BIT' )
 fw = Dataset(numlist+'.cdf', 'w', format=netcdfVersion )
 
+# Global atributes:
+fw.title = 'expnam'
+fw.history = 'Created ' + time.ctime()
+
+#Dimensions:
 fw.createDimension('x_t', Lon_t.shape[0])
 fw.createDimension('x_u', Lon_u.shape[0])
 fw.createDimension('Depth_t', Dep_t.shape[0])
@@ -401,26 +455,30 @@ y_v[:] = Lat_v[:]
 
 Time = fw.createVariable('Time', 'f', ('Time',))
 Time.long_name = "Time                    "
-Time.units = "seconds         "
+Time.units = timeUnits
 Time.time_origin = startDate
 Time[:] = int(numlist)*deltaTclock
 
+# Select 2D variables to use
 variables_to_use = {}
 for parameter in variables:
     if variables[parameter] == True:
         variables_to_use[parameter] = variables[parameter]
 
+# Select 3D variables to use
 variables_to_use3d = {}
 for parameter in variables3d:
     if variables3d[parameter] == True:
         variables_to_use3d[parameter] = variables3d[parameter]
 
+# Save 2D variables
 for parameter in sorted(variables_to_use.iterkeys()):
     fname = './'+parameter+'.'+numlist+'.data'
     print fname
     ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
     sname, name, unit, grid = gatrib(parameter)
     
+    # Select grid
     if ndim == 2:
         if grid == 'TS':
             dimTuple = ('Time', 'y_t', 'x_t',)
@@ -434,15 +492,17 @@ for parameter in sorted(variables_to_use.iterkeys()):
         else:
             raise Exception("The grid is not specified.\n For 2d variables can be 'TS','U' or 'V' ")
     
+    # Create variable
     parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue, zlib=czip, complevel=compr)
     parVar.long_name = name
     parVar.units = unit
     parVar.missing_value = FillValue
-    #parVar._FillValue = FillValue
     parVar.grid = grid
-
+    
+    # Load data from binary file
     varValues = mitbin2(fname)
     
+    # Mask and put the data in to the netCDF variable
     if ndim == 2:
     	if (grid == 'TS') or (grid =='W') :
     	    varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
@@ -458,9 +518,11 @@ for parameter in sorted(variables_to_use.iterkeys()):
             parVar[:] = varValues[:,0,:,:]         	
     else:
         raise Exception("Grid dimensions should be 2D (plus time)")
-#    fw.sync
-    #del varValues, parVar    
+    
+    # Save data to disk
+    fw.sync
 
+#Same for 3D variables    
 for parameter in sorted(variables_to_use3d.iterkeys()):
     fname = './'+parameter+'.'+numlist+'.data'
     print fname
@@ -513,7 +575,7 @@ for parameter in sorted(variables_to_use3d.iterkeys()):
             parVar[:] = varValues[:]
     else:
         raise Exception("Grid dimensions should be 3D (plus time)")
-#    fw.sync
-    #del varValues, parVar    
+    fw.sync
+        
 fw.close()
 
