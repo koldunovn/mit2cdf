@@ -13,7 +13,7 @@ import os
 fileList = glob.glob('Ttave.*.data')
 fileList.sort()
 
-for name in fileList[0:12]:
+for name in fileList:
     os.system('python cvmit_tave.py '+name[6:16])
 
 
