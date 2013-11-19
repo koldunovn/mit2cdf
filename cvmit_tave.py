@@ -6,6 +6,8 @@
 # cvmit_tave.py 0000010957
 # or:
 # python cvmit_tave.py 0000010957
+# 
+# You have to modify variables in the beggining of the file to match your setup.
 #
 # Dependencies:
 #
