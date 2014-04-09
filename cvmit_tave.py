@@ -3,11 +3,10 @@
 # Converts binary MITgcm snapshots to netCDF.
 #
 # usage:
-# cvmit_tave.py 0000010957
-# or:
-# python cvmit_tave.py 0000010957
-# 
-# You have to modify variables in the beggining of the file to match your setup.
+# import cvmit_tave
+# cvmit_tave.cnv2netcdf("0000010957")
+#
+# You have to modify variables in the beggining of the cnv2netcdf function to match your setup.
 #
 # Dependencies:
 #
@@ -38,89 +37,6 @@ import os
 import sys
 import time
 
-numlist =  str(sys.argv[1])
-Nx=480
-Ny=416
-Nr=50
-expnam='POL06'
-startDate='01-JAN-2000 00:00:00'
-timeUnits = "seconds         "
-deltaTclock=1200.
-#iBinaryPrec=32.
-
-# Gridding parameters
-delZ= np.array([1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01,
-       1.000000e+01, 1.000000e+01, 1.001000e+01, 1.003000e+01, 1.011000e+01,
-       1.032000e+01, 1.080000e+01, 1.176000e+01, 1.342000e+01, 1.604000e+01,
-       1.982000e+01, 2.485000e+01, 3.110000e+01, 3.842000e+01, 4.650000e+01,
-       5.500000e+01, 6.350000e+01, 7.158000e+01, 7.890000e+01, 8.515000e+01,
-       9.018000e+01, 9.396000e+01, 9.658000e+01, 9.825000e+01, 9.925000e+01,
-       1.000100e+02, 1.013300e+02, 1.045600e+02, 1.113300e+02, 1.228300e+02,
-       1.390900e+02, 1.589400e+02, 1.808300e+02, 2.035500e+02, 2.265000e+02,
-       2.495000e+02, 2.725000e+02, 2.955000e+02, 3.185000e+02, 3.415000e+02,
-       3.645000e+02, 3.875000e+02, 4.105000e+02, 4.335000e+02, 4.565000e+02])
-phiMin=0.
-thetaMin=0.
-# np.array of delX values 
-delX = np.ones(Nx); 
-# np.array of delY values
-delY = np.ones(Ny)
-
-FillValue=-1.0e+23
-
-# Do we need byteswap? Usually you need it if files
-# were created on the big-endian machine, and conversion is
-# happening on the little-endian machine (or vice versa).
-byteswap = 1
-
-# Parameter that will be used for masking. Should be 3d, usually salinity, U and V
-paramFillTS = 'Stave'
-paramFillU  = 'uVeltave'
-paramFillV  = 'uVeltave'
-
-# Value that will be used for masking
-valueFill = 0.
-
-#do we need compression?
-czip = True
-
-# level of compression (from 1 (fastest) to 9 (slowest))
-compr = 4
-
-#netCDF version
-#Options:
-#NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
-netcdfVersion = 'NETCDF4'
-
-
-#Variables to save:
-# 2D
-variables = {'AREAtave':True,
-             'HEFFtave':True,
-             'ETAtave':True,
-             'PHLtave':True,
-             'UICEtave':True,
-             'VICEtave':True,
-             'HSNOWtave':False,
-             'HSALTtave':False,
-             'QNETtave':True,
-             'QSWtave':True,
-             'EmPmRtave':True,
-             'FUtave':True,
-             'FVtave':True,
-             'UWINDtave':False,
-             'VWINDtave':False,
-             'sFluxtave':True,
-             'tFluxtave':True,
-             'uFluxtave':True,
-             'vFluxtave':True}
-#3D
-variables3d ={'Ttave':True,
-              'Stave':True,
-              'uVeltave':True,
-              'vVeltave':True,
-              'wVeltave':True
-              }
 
 # Properties of the variables:
 def gatrib(parname):
@@ -363,221 +279,306 @@ def mitbin2(filename, bswap=1, meta=None):
         
         return data
 
+def cnv2netcdf(numlist):
 
-# Grid creation
+    #numlist =  str(sys.argv[1])
+    Nx=480
+    Ny=416
+    Nr=50
+    expnam='POL06'
+    startDate='01-JAN-2000 00:00:00'
+    timeUnits = "seconds         "
+    deltaTclock=1200.
+    #iBinaryPrec=32.
 
-Lat_v = np.empty(Ny, dtype='float32')
-Lat_t = np.empty(Ny, dtype='float32')
-Lat_v[0]=phiMin
-Lat_t[0]=phiMin+delY[0]*0.5
-for j in range(1,Ny):
-    Lat_v[j]=Lat_v[j-1]+delY[j-1]
-    Lat_t[j]=Lat_t[j-1]+delY[j-1]
+    # Gridding parameters
+    delZ= np.array([1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01, 1.000000e+01,
+           1.000000e+01, 1.000000e+01, 1.001000e+01, 1.003000e+01, 1.011000e+01,
+           1.032000e+01, 1.080000e+01, 1.176000e+01, 1.342000e+01, 1.604000e+01,
+           1.982000e+01, 2.485000e+01, 3.110000e+01, 3.842000e+01, 4.650000e+01,
+           5.500000e+01, 6.350000e+01, 7.158000e+01, 7.890000e+01, 8.515000e+01,
+           9.018000e+01, 9.396000e+01, 9.658000e+01, 9.825000e+01, 9.925000e+01,
+           1.000100e+02, 1.013300e+02, 1.045600e+02, 1.113300e+02, 1.228300e+02,
+           1.390900e+02, 1.589400e+02, 1.808300e+02, 2.035500e+02, 2.265000e+02,
+           2.495000e+02, 2.725000e+02, 2.955000e+02, 3.185000e+02, 3.415000e+02,
+           3.645000e+02, 3.875000e+02, 4.105000e+02, 4.335000e+02, 4.565000e+02])
+    phiMin=0.
+    thetaMin=0.
+    # np.array of delX values 
+    delX = np.ones(Nx); 
+    # np.array of delY values
+    delY = np.ones(Ny)
 
-Lon_u = np.empty(Nx, dtype='float32')
-Lon_t = np.empty(Nx, dtype='float32')
-Lon_u[0]=thetaMin
-Lon_t[0]=thetaMin+delX[0]*0.5
-for i in range(1,Nx):
-     Lon_u[i]=Lon_u[i-1]+delX[i-1]
-     Lon_t[i]=Lon_t[i-1]+delX[i-1]
+    FillValue=-1.0e+23
 
-Dep_w = np.empty(Nr+1, dtype='float32') 
-Dep_w[0]=0.
-for k in range(1,Nr+1):
-    Dep_w[k]=Dep_w[k-1]+delZ[k-1]
+    # Do we need byteswap? Usually you need it if files
+    # were created on the big-endian machine, and conversion is
+    # happening on the little-endian machine (or vice versa).
+    byteswap = 1
 
-Dep_t = np.empty(Nr, dtype='float32')
-for k in range(0,Nr):
-     Dep_t[k]=(Dep_w[k]+Dep_w[k+1])*0.5
-#Dep_w = Dep_w[:-1]
+    # Parameter that will be used for masking. Should be 3d, usually salinity, U and V
+    paramFillTS = 'Stave'
+    paramFillU  = 'uVeltave'
+    paramFillV  = 'uVeltave'
 
-# Create masks for different grids:
+    # Value that will be used for masking
+    valueFill = 0.
 
-maskTS = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
-maskU = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
-maskV = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+    #do we need compression?
+    czip = True
 
-maskTS[maskTS!=0]=1.
-maskU[maskTS!=0]=1.
-maskV[maskTS!=0]=1.
+    # level of compression (from 1 (fastest) to 9 (slowest))
+    compr = 4
 
-# Remove file if it's already exist
-os.system('rm '+numlist+'.cdf')
+    #netCDF version
+    #Options:
+    #NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+    netcdfVersion = 'NETCDF4_CLASSIC'
 
-print(numlist+'.cdf')
 
-fw = Dataset(numlist+'.cdf', 'w', format=netcdfVersion )
+    #Variables to save:
+    # 2D
+    variables = {'AREAtave':True,
+                 'HEFFtave':False,
+                 'ETAtave':False,
+                 'PHLtave':False,
+                 'UICEtave':False,
+                 'VICEtave':False,
+                 'HSNOWtave':False,
+                 'HSALTtave':False,
+                 'QNETtave':False,
+                 'QSWtave':False,
+                 'EmPmRtave':False,
+                 'FUtave':False,
+                 'FVtave':False,
+                 'UWINDtave':False,
+                 'VWINDtave':False,
+                 'sFluxtave':False,
+                 'tFluxtave':False,
+                 'uFluxtave':False,
+                 'vFluxtave':False}
+    #3D
+    variables3d ={'Ttave':True,
+                  'Stave':True,
+                  'uVeltave':True,
+                  'vVeltave':True,
+                  'wVeltave':False
+                  }
 
-# Global atributes:
-fw.title = 'expnam'
-fw.history = 'Created ' + time.ctime()
+    # Grid creation
 
-#Dimensions:
-fw.createDimension('x_t', Lon_t.shape[0])
-fw.createDimension('x_u', Lon_u.shape[0])
-fw.createDimension('Depth_t', Dep_t.shape[0])
-fw.createDimension('Depth_w', Dep_w.shape[0])
-fw.createDimension('y_t', Lat_t.shape[0])
-fw.createDimension('y_v', Lat_v.shape[0])
-fw.createDimension('Time', None)
+    Lat_v = np.empty(Ny, dtype='float32')
+    Lat_t = np.empty(Ny, dtype='float32')
+    Lat_v[0]=phiMin
+    Lat_t[0]=phiMin+delY[0]*0.5
+    for j in range(1,Ny):
+        Lat_v[j]=Lat_v[j-1]+delY[j-1]
+        Lat_t[j]=Lat_t[j-1]+delY[j-1]
 
-x_t = fw.createVariable('x_t', 'f', ('x_t',))
-x_t.long_name = "X on T grid" 
-x_t.units = " " 
-x_t[:] = Lon_t[:]
+    Lon_u = np.empty(Nx, dtype='float32')
+    Lon_t = np.empty(Nx, dtype='float32')
+    Lon_u[0]=thetaMin
+    Lon_t[0]=thetaMin+delX[0]*0.5
+    for i in range(1,Nx):
+         Lon_u[i]=Lon_u[i-1]+delX[i-1]
+         Lon_t[i]=Lon_t[i-1]+delX[i-1]
 
-x_u = fw.createVariable('x_u', 'f', ('x_u',))
-x_u.long_name = "X on U grid" 
-x_u.units = " " 
-x_u[:] = Lon_u[:]
+    Dep_w = np.empty(Nr+1, dtype='float32') 
+    Dep_w[0]=0.
+    for k in range(1,Nr+1):
+        Dep_w[k]=Dep_w[k-1]+delZ[k-1]
 
-Depth_t = fw.createVariable('Depth_t', 'f',('Depth_t',))
-Depth_t.long_name = "Depth of T grid points  "
-Depth_t.units = "meters          "
-Depth_t.positive = "down"
-Depth_t.edges = "Depth_w"
-Depth_t[:] = Dep_t[:]
+    Dep_t = np.empty(Nr, dtype='float32')
+    for k in range(0,Nr):
+         Dep_t[k]=(Dep_w[k]+Dep_w[k+1])*0.5
+    #Dep_w = Dep_w[:-1]
 
-Depth_w = fw.createVariable('Depth_w', 'f', ('Depth_w',)) 
-Depth_w.long_name = "Depth at bottom of T box"
-Depth_w.units = "meters          " 
-Depth_w.positive = "down" 
-Depth_w[:] = Dep_w[:]
+    # Create masks for different grids:
 
-y_t = fw.createVariable('y_t', 'f', ('y_t',)) 
-y_t.long_name = "Y on T grid" 
-y_t.units = " "
-y_t[:] = Lat_t[:]
+    maskTS = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+    maskU = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+    maskV = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
 
-y_v = fw.createVariable('y_v', 'f',('y_v',))
-y_v.long_name = "Y on V grid" 
-y_v.units = " "
-y_v[:] = Lat_v[:]
+    maskTS[maskTS!=0]=1.
+    maskU[maskTS!=0]=1.
+    maskV[maskTS!=0]=1.
 
-Time = fw.createVariable('Time', 'f', ('Time',))
-Time.long_name = "Time                    "
-Time.units = timeUnits
-Time.time_origin = startDate
-Time[:] = int(numlist)*deltaTclock
+    # Remove file if it's already exist
+    os.system('rm '+numlist+'.cdf')
 
-# Select 2D variables to use
-variables_to_use = {}
-for parameter in variables:
-    if variables[parameter] == True:
-        variables_to_use[parameter] = variables[parameter]
+    print(numlist+'.cdf')
 
-# Select 3D variables to use
-variables_to_use3d = {}
-for parameter in variables3d:
-    if variables3d[parameter] == True:
-        variables_to_use3d[parameter] = variables3d[parameter]
+    fw = Dataset(numlist+'.cdf', 'w', format=netcdfVersion )
 
-# Save 2D variables
-for parameter in sorted(variables_to_use.iterkeys()):
-    fname = './'+parameter+'.'+numlist+'.data'
-    print fname
-    ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
-    sname, name, unit, grid = gatrib(parameter)
-    
-    # Select grid
-    if ndim == 2:
-        if grid == 'TS':
-            dimTuple = ('Time', 'y_t', 'x_t',)
+    # Global atributes:
+    fw.title = 'expnam'
+    fw.history = 'Created ' + time.ctime()
+
+    #Dimensions:
+    fw.createDimension('x_t', Lon_t.shape[0])
+    fw.createDimension('x_u', Lon_u.shape[0])
+    fw.createDimension('Depth_t', Dep_t.shape[0])
+    fw.createDimension('Depth_w', Dep_w.shape[0])
+    fw.createDimension('y_t', Lat_t.shape[0])
+    fw.createDimension('y_v', Lat_v.shape[0])
+    fw.createDimension('Time', None)
+
+    x_t = fw.createVariable('x_t', 'f', ('x_t',))
+    x_t.long_name = "X on T grid" 
+    x_t.units = " " 
+    x_t[:] = Lon_t[:]
+
+    x_u = fw.createVariable('x_u', 'f', ('x_u',))
+    x_u.long_name = "X on U grid" 
+    x_u.units = " " 
+    x_u[:] = Lon_u[:]
+
+    Depth_t = fw.createVariable('Depth_t', 'f',('Depth_t',))
+    Depth_t.long_name = "Depth of T grid points  "
+    Depth_t.units = "meters          "
+    Depth_t.positive = "down"
+    Depth_t.edges = "Depth_w"
+    Depth_t[:] = Dep_t[:]
+
+    Depth_w = fw.createVariable('Depth_w', 'f', ('Depth_w',)) 
+    Depth_w.long_name = "Depth at bottom of T box"
+    Depth_w.units = "meters          " 
+    Depth_w.positive = "down" 
+    Depth_w[:] = Dep_w[:]
+
+    y_t = fw.createVariable('y_t', 'f', ('y_t',)) 
+    y_t.long_name = "Y on T grid" 
+    y_t.units = " "
+    y_t[:] = Lat_t[:]
+
+    y_v = fw.createVariable('y_v', 'f',('y_v',))
+    y_v.long_name = "Y on V grid" 
+    y_v.units = " "
+    y_v[:] = Lat_v[:]
+
+    Time = fw.createVariable('Time', 'f', ('Time',))
+    Time.long_name = "Time                    "
+    Time.units = timeUnits
+    Time.time_origin = startDate
+    Time[:] = int(numlist)*deltaTclock
+
+    # Select 2D variables to use
+    variables_to_use = {}
+    for parameter in variables:
+        if variables[parameter] == True:
+            variables_to_use[parameter] = variables[parameter]
+
+    # Select 3D variables to use
+    variables_to_use3d = {}
+    for parameter in variables3d:
+        if variables3d[parameter] == True:
+            variables_to_use3d[parameter] = variables3d[parameter]
+
+    # Save 2D variables
+    for parameter in sorted(variables_to_use.iterkeys()):
+        fname = './'+parameter+'.'+numlist+'.data'
+        print fname
+        ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
+        sname, name, unit, grid = gatrib(parameter)
         
-        elif grid == 'U':
-            dimTuple = ('Time', 'y_t', 'x_u',)
+        # Select grid
+        if ndim == 2:
+            if grid == 'TS':
+                dimTuple = ('Time', 'y_t', 'x_t',)
+            
+            elif grid == 'U':
+                dimTuple = ('Time', 'y_t', 'x_u',)
+            
+            elif grid == 'V':
+                dimTuple = ('Time', 'y_v', 'x_t',)
+            
+            else:
+                raise Exception("The grid is not specified.\n For 2d variables can be 'TS','U' or 'V' ")
         
-        elif grid == 'V':
-            dimTuple = ('Time', 'y_v', 'x_t',)
+        # Create variable
+        parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue, zlib=czip, complevel=compr)
+        parVar.long_name = name
+        parVar.units = unit
+        parVar.missing_value = FillValue
+        parVar.grid = grid
         
+        # Load data from binary file
+        varValues = mitbin2(fname)
+        
+        # Mask and put the data in to the netCDF variable
+        if ndim == 2:
+            if (grid == 'TS') or (grid =='W') :
+        	varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskTS[:,0,:,:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:,0,:,:]
+            elif grid == 'U':
+                varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskU[:,0,:,:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:,0,:,:]       	
+            elif grid == 'V':
+                varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskV[:,0,:,:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:,0,:,:]         	
         else:
-            raise Exception("The grid is not specified.\n For 2d variables can be 'TS','U' or 'V' ")
-    
-    # Create variable
-    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue, zlib=czip, complevel=compr)
-    parVar.long_name = name
-    parVar.units = unit
-    parVar.missing_value = FillValue
-    parVar.grid = grid
-    
-    # Load data from binary file
-    varValues = mitbin2(fname)
-    
-    # Mask and put the data in to the netCDF variable
-    if ndim == 2:
-    	if (grid == 'TS') or (grid =='W') :
-    	    varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskTS[:,0,:,:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:,0,:,:]
-        elif grid == 'U':
-     	    varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskU[:,0,:,:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:,0,:,:]       	
-        elif grid == 'V':
-      	    varValues = np.where(varValues[:,0,:,:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskV[:,0,:,:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:,0,:,:]         	
-    else:
-        raise Exception("Grid dimensions should be 2D (plus time)")
-    
-    # Save data to disk
-    fw.sync
+            raise Exception("Grid dimensions should be 2D (plus time)")
+        
+        # Save data to disk
+        fw.sync
 
-#Same for 3D variables    
-for parameter in sorted(variables_to_use3d.iterkeys()):
-    fname = './'+parameter+'.'+numlist+'.data'
-    print fname
-    ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
-    sname, name, unit, grid = gatrib(parameter)
-    
-    if ndim == 3:
-        if grid == 'TS':
-            dimTuple = ('Time', 'Depth_t', 'y_t', 'x_t',)
+    #Same for 3D variables    
+    for parameter in sorted(variables_to_use3d.iterkeys()):
+        fname = './'+parameter+'.'+numlist+'.data'
+        print fname
+        ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
+        sname, name, unit, grid = gatrib(parameter)
         
-        elif grid == 'U':
-            dimTuple = ('Time', 'Depth_t', 'y_t', 'x_u',)
-        
-        elif grid == 'V':
-            dimTuple = ('Time', 'Depth_t', 'y_v', 'x_t',)
+        if ndim == 3:
+            if grid == 'TS':
+                dimTuple = ('Time', 'Depth_t', 'y_t', 'x_t',)
             
-        elif grid == 'W':
-            dimTuple = ('Time', 'Depth_w', 'y_t', 'x_t',)
-        
+            elif grid == 'U':
+                dimTuple = ('Time', 'Depth_t', 'y_t', 'x_u',)
+            
+            elif grid == 'V':
+                dimTuple = ('Time', 'Depth_t', 'y_v', 'x_t',)
+                
+            elif grid == 'W':
+                dimTuple = ('Time', 'Depth_w', 'y_t', 'x_t',)
+            
+            else:
+                raise Exception("The grid is not specified.\n For 3d variables can be 'TS','U','V' or 'W' ")
+                
+                
+        parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue,  zlib=czip, complevel=compr)
+        parVar.long_name = name
+        parVar.units = unit
+        parVar.missing_value = FillValue
+        #parVar._FillValue = FillValue
+        parVar.grid = grid
+
+        varValues = mitbin2(fname)
+
+        if ndim == 3:
+            if grid == 'TS':
+                varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:]
+            elif grid == 'U':
+                varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskU[:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:]
+            elif grid == 'V':
+                varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskV[:]==0, FillValue, varValues[:])
+                parVar[:] = varValues[:]
+            elif grid == 'W':
+                varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
+                varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
+                varValues = np.concatenate((varValues,varValues[:,-1:,:,:]), axis=1)
+                parVar[:] = varValues[:]
         else:
-            raise Exception("The grid is not specified.\n For 3d variables can be 'TS','U','V' or 'W' ")
+            raise Exception("Grid dimensions should be 3D (plus time)")
+        fw.sync
             
-            
-    parVar = fw.createVariable(sname, 'f', dimTuple , fill_value=FillValue,  zlib=czip, complevel=compr)
-    parVar.long_name = name
-    parVar.units = unit
-    parVar.missing_value = FillValue
-    #parVar._FillValue = FillValue
-    parVar.grid = grid
-
-    varValues = mitbin2(fname)
-
-    if ndim == 3:
-        if grid == 'TS':
-            varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:]
-        elif grid == 'U':
-            varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskU[:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:]
-        elif grid == 'V':
-            varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskV[:]==0, FillValue, varValues[:])
-            parVar[:] = varValues[:]
-        elif grid == 'W':
-            varValues = np.where(varValues[:] < -1.0e+20, FillValue, varValues[:])
-            varValues = np.where(maskTS[:]==0, FillValue, varValues[:])
-            varValues = np.concatenate((varValues,varValues[:,-1:,:,:]), axis=1)
-            parVar[:] = varValues[:]
-    else:
-        raise Exception("Grid dimensions should be 3D (plus time)")
-    fw.sync
-        
-fw.close()
+    fw.close()
 
