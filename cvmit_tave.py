@@ -286,8 +286,13 @@ def cnv2netcdf(numlist):
     Ny=416
     Nr=50
     expnam='POL06'
+    #this time settings are good for ferret
     startDate='01-JAN-2000 00:00:00'
     timeUnits = "seconds         "
+    #this time settings are good for cdo
+    #startDate='15-12-1989 00:00:00'
+    #timeUnits = "seconds since "+startDate
+
     deltaTclock=1200.
     #iBinaryPrec=32.
 
