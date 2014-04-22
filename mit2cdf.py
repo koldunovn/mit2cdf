@@ -9,12 +9,12 @@
 
 import glob
 import os
-import cvmit_tave_parallel
+import cvmit_tave
 
 fileList = glob.glob('Ttave.*.data')
 fileList.sort()
 
 for name in fileList:
-    cvmit_tave_parallel.cnv2netcdf(name[6:16])
+    cvmit_tave.cnv2netcdf(name[6:16])
 
 
