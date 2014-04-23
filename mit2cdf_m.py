@@ -10,6 +10,8 @@ except:
 
 pool = multiprocessing.Pool(processes=int(nproc))
 
+fileList = glob.glob('Ttave.*.data')[0:6]
+fileList.sort()
 
 for i in range(len(fileList)):
     fileList[i]=fileList[i][6:16]
