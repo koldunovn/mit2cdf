@@ -49,7 +49,9 @@ after job finish:
 
 ####To convert all files in directory (multiprocessor job with `multiprocessing` module):
 
-`python mit2cdf_m.py`
+`python mit2cdf_m.py nproc`
+
+where `nproc` is number of processors.
 
 Dependencies:
 =============
