@@ -19,13 +19,37 @@ In order to save new variable you have to:
 Usage
 =====
 
-`cvmit_tave.py 0000010957`
+For single time step conversion:
 
-**or:**
+```python
+import cvmit_tave
 
-`python cvmit_tave.py 0000010957`
- 
-You have to modify variables in the beggining of the file to match your setup.
+cvmit_tave.cnv2netcdf('0000010957')
+```
+
+
+You have to modify variables in the `cnv2netcdf` function to match your setup.
+
+####To convert all files in directory (serial job):
+
+
+`python mit2cdf.py`
+
+####To convert all files in directory (multiprocessor job with `IPython parallel`):
+
+`ipcluster start -n N`
+
+where `N` is number of processes. 
+
+`python mit2cdf_p.py`
+
+after job finish:
+
+`ipcluster stop`
+
+####To convert all files in directory (multiprocessor job with `multiprocessing` module):
+
+`python mit2cdf_m.py`
 
 Dependencies:
 =============
