@@ -1,6 +1,7 @@
 import cvmit_tave
 import multiprocessing
 import sys
+import glob
 
 try:
     nproc = sys.argv[1]
@@ -10,7 +11,7 @@ except:
 
 pool = multiprocessing.Pool(processes=int(nproc))
 
-fileList = glob.glob('Ttave.*.data')[0:6]
+fileList = glob.glob('Ttave.*.data')
 fileList.sort()
 
 for i in range(len(fileList)):
