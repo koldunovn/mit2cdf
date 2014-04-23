@@ -29,7 +29,7 @@ import time
 c = Client()
 dv = c[:]
 
-fileList = glob.glob('Ttave.*.data')[0:6]
+fileList = glob.glob('Ttave.*.data')
 fileList.sort()
 
 for i in range(len(fileList)):
