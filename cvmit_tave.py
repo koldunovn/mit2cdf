@@ -401,12 +401,12 @@ def cnv2netcdf(numlist):
     # Create masks for different grids:
 
     maskTS = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
-    maskU = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
-    maskV = mitbin2('./'+paramFillTS+'.'+numlist+'.data')
+    maskU = mitbin2('./'+paramFillU+'.'+numlist+'.data')
+    maskV = mitbin2('./'+paramFillV+'.'+numlist+'.data')
 
     maskTS[maskTS!=0]=1.
-    maskU[maskTS!=0]=1.
-    maskV[maskTS!=0]=1.
+    maskU[maskU!=0]=1.
+    maskV[maskV!=0]=1.
 
     # Remove file if it's already exist
     os.system('rm '+numlist+'.cdf')
