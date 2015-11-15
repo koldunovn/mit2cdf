@@ -220,7 +220,10 @@ def rmeta(fname):
             out_dims = ast.literal_eval(line.split('=')[1].lstrip())
             metadata['xdim'] = out_dims[3]
             metadata['ydim'] = out_dims[0]
-            metadata['zdim'] = out_dims[6]
+            if metadata['nDims']>=3:
+                metadata['zdim'] = out_dims[6]
+            else:
+                metadata['zdim'] = 1
         elif line.startswith('dataprec'):
             metadata['datatype'] = line.split('=')[1].split()[1].lstrip('\'').rstrip('\'')
         elif line.startswith('nrecords'):
@@ -269,9 +272,9 @@ def mitbin2(filename, bswap=1, meta=None):
 def cnv2netcdf(numlist):
 
     #numlist =  str(sys.argv[1])
-    Nx=480
-    Ny=416
-    Nr=50
+    Nx=90
+    Ny=40
+    Nr=15
     expnam='POL06'
     #this time settings are good for ferret
     startDate='01-JAN-2000 00:00:00'
@@ -332,7 +335,7 @@ def cnv2netcdf(numlist):
     # 2D
     variables = {'AREAtave':False,
                  'HEFFtave':False,
-                 'ETAtave':False,
+                 'ETAtave':True,
                  'PHLtave':False,
                  'UICEtave':False,
                  'VICEtave':False,
@@ -470,7 +473,17 @@ def cnv2netcdf(numlist):
     for parameter in sorted(variables_to_use.iterkeys()):
         fname = './'+parameter+'.'+numlist+'.data'
         print fname
-        ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
+
+        md = rmeta(fname[:-4]+'meta')
+        
+        ndim = md['nDims']
+        xdim = md['xdim']
+        ydim = md['ydim']
+
+        datatype = md['datatype']
+        nrecords = md['nrecords']
+        timeStepNumber = md['timeStepNumber']
+
         sname, name, unit, grid = gatrib(parameter)
         
         # Select grid
