@@ -330,7 +330,7 @@ def cnv2netcdf(numlist):
 
     #Variables to save:
     # 2D
-    variables = {'AREAtave':True,
+    variables = {'AREAtave':False,
                  'HEFFtave':False,
                  'ETAtave':False,
                  'PHLtave':False,
@@ -521,7 +521,16 @@ def cnv2netcdf(numlist):
     for parameter in sorted(variables_to_use3d.iterkeys()):
         fname = './'+parameter+'.'+numlist+'.data'
         print fname
-        ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(fname[:-4]+"meta")
+        md = rmeta(fname[:-4]+'meta')
+        
+        ndim = md['nDims']
+        xdim = md['xdim']
+        ydim = md['ydim']
+        zdim = md['zdim']
+        datatype = md['datatype']
+        nrecords = md['nrecords']
+        timeStepNumber = md['timeStepNumber']
+
         sname, name, unit, grid = gatrib(parameter)
         
         if ndim == 3:
