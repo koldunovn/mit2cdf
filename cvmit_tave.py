@@ -197,50 +197,36 @@ def gatrib(parname):
         return sname, name, unit, grid
 
 # Define functions that will read MITgcm binary data:
-def rmeta(filename):
-        ''' Reads .meta file and return information about .data file.
+def rmeta(fname):
+    ''' Reads .meta file and return information about .data file.
         Usage: rmeta(filename)
-
         Input:
          filename = name of the .meta file (with .meta extention)
-        
-        Output:
-         ndim                - Number of dimensions.
-         xdim                - Xdim
-         ydim                - Ydim
-         zdim                - Zdim
-         datatype                - Datatype
-         nrecords                - Number of records.
-         timeStepNumber        - Time step number
+    '''
+    ifile = open(fname, 'r')
+    lines = ifile.readlines()
+    ifile.close()
+    lines = map(str.rstrip, lines)
+    lines = map(str.lstrip, lines)
+    metadata = {}
 
-        '''
-        
-        ifile = open(filename, 'r')
-        lines = ifile.readlines()
-        ifile.close()
-
-        ndim = int(lines[0].split()[3])
-        ydim = int(lines[2].split()[0][:-1])
-        xdim = int(lines[3].split()[0][:-1])
-
-        if ndim == 2:
-                increm = 0
-                zdim = 1
-        elif ndim == 3:
-                zdim = int(lines[4].split()[0][:-1])
-                increm = 1
-        else:
-                print("unsupported number of dimensions")
-        
-        datatype         = lines[5+increm].split()[3][1:-1]
-        nrecords          = int(lines[6+increm].split()[3])
-        
-        if any("timeStepNumber" in s for s in lines):
-                timeStepNumber = int(lines[7+increm].split()[3])
-        else:
-                timeStepNumber = 1        
-        
-        return ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber
+    for line in lines:
+        if line.startswith('simulation'):
+            metadata['simulation'] = line.split("=")[1].split()[1]
+        elif line.startswith('nDims'):
+            metadata['nDims'] = int(line.split('=')[1].split()[1])
+        elif line.startswith('dimList'):
+            out_dims = ast.literal_eval(a[2].split('=')[1].lstrip())
+            metadata['xdim'] = out_dims[3]
+            metadata['ydim'] = out_dims[0]
+            metadata['zdim'] = out_dims[6]
+        elif line.startswith('dataprec'):
+            metadata['datatype'] = line.split('=')[1].split()[1].lstrip('\'').rstrip('\'')
+        elif line.startswith('nrecords'):
+            metadata['nrecords'] = int(line.split('=')[1].split()[1])
+        elif line.startswith('timeStepNumber'):
+            metadata['timeStepNumber'] = int(line.split('=')[1].split()[1])
+    return metadata
 
 def mitbin2(filename, bswap=1, meta=None):
         '''Uses rmeta to get inforamtion about the file and return field extracted from it.
@@ -259,15 +245,15 @@ def mitbin2(filename, bswap=1, meta=None):
         
         fd_data = open(filename, 'rb')
         if meta == None:
-                ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(filename[:-4]+"meta")
+                metadata = rmeta(filename[:-4]+"meta")
         elif meta == 'xx':
-                ndim, xdim, ydim, zdim, datatype, nrecords, timeStepNumber = rmeta(filename[2:-4]+"meta")
+                metadata = rmeta(filename[2:-4]+"meta")
         
-        size = nrecords*zdim*xdim*ydim
+        size = metadata['nrecords']*metadata['zdim']*metadata['xdim']*metadata['ydim']
         
-        shape = (nrecords,zdim,xdim,ydim)
+        shape = (metadata['nrecords'],metadata['zdim'],metadata['xdim'],metadata['ydim'])
         
-        data = np.fromfile(file=fd_data, dtype = datatype, count=size)
+        data = np.fromfile(file=fd_data, dtype = metadata['datatype'], count=size)
         
         data = data.reshape(shape)
         if bswap==1:
