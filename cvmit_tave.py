@@ -36,7 +36,7 @@ from netCDF4 import Dataset
 import os
 import sys
 import time
-
+import ast
 
 # Properties of the variables:
 def gatrib(parname):
@@ -209,6 +209,7 @@ def rmeta(fname):
     lines = map(str.rstrip, lines)
     lines = map(str.lstrip, lines)
     metadata = {}
+    lines = ''.join(lines).split(';')
 
     for line in lines:
         if line.startswith('simulation'):
@@ -216,7 +217,7 @@ def rmeta(fname):
         elif line.startswith('nDims'):
             metadata['nDims'] = int(line.split('=')[1].split()[1])
         elif line.startswith('dimList'):
-            out_dims = ast.literal_eval(a[2].split('=')[1].lstrip())
+            out_dims = ast.literal_eval(line.split('=')[1].lstrip())
             metadata['xdim'] = out_dims[3]
             metadata['ydim'] = out_dims[0]
             metadata['zdim'] = out_dims[6]
